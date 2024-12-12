@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         // Define your Docker Hub credentials and image name here
-        DOCKER_IMAGE = 'redheaven/hello-world:latest' // Image name
+        DOCKER_IMAGE = 'anurpriyanto/bologin:latest' // Image name
         KUBE_CONTEXT = 'your-kube-context'  // Kube context if you have multiple clusters
         KUBERNETES_NAMESPACE = 'default'  // Replace with your namespace
     }
@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout your repository
-                git 'https://github.com/irfanrp/jenkins-integration.git'
+                git 'https://github.com/anurpriyanto/bo-login.git'
             }
         }
         stage('Build Docker Image') {
@@ -25,48 +25,13 @@ pipeline {
         }
         stage('Docker Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', passwordVariable: 'Qwerty117532', usernameVariable: 'anurpriyanto')]) {
                 sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
                 sh 'docker push $DOCKER_IMAGE'
                 }
             }
         }
-        // stage('delete manifest in Kubernetes') {
-        //     steps {
-        //         script {
-        //             // Deploy to Kubernetes using kubectl
-        //             sh '''
-        //                 kubectl delete -f k8s/deployment.yaml -n $KUBERNETES_NAMESPACE
-        //                 sleep 60
-        //             '''
-        //         }
-        //     }
-        // }
-        stage('Deploy again to Kubernetes') {
-            steps {
-                script {
-                    // Deploy to Kubernetes using kubectl
-                    sh '''
-                        kubectl apply -f k8s/deployment.yaml -n $KUBERNETES_NAMESPACE
-                    '''
-                }
-            }
-        }
-        stage('rollout restart  Kubernetes') {
-            steps {
-                script {
-                    // Deploy to Kubernetes using kubectl
-                    sh '''
-                        kubectl rollout restart deployment/helloworld-app -n $KUBERNETES_NAMESPACE
-                    '''
-                }
-            }
-        }
+        
     }
-    post {
-        always {
-            // Clean up if necessary, for example, remove the Docker image locally
-            sh 'docker rmi $DOCKER_IMAGE'
-        }
-    }
+    
 }
