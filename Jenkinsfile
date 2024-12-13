@@ -23,7 +23,7 @@ pipeline {
                 }
             }
         }
-        stage('Docker Push') {
+        stage('Docker PushCCCCCCCC') {
             steps {
                 echo "docker.....PUSH....INIT"
                 withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', passwordVariable: 'Qwerty117532', usernameVariable: 'anurpriyanto')]) {
