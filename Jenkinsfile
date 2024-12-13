@@ -9,8 +9,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Checkout your repository
-                git 'https://github.com/anurpriyanto/bo-login.git'
+                git branch: 'main', 
+                    url: 'https://github.com/anurpriyanto/bo-login.git'
             }
         }
         stage('Build Docker Image') {
