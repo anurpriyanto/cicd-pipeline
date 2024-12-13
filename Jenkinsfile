@@ -17,6 +17,7 @@ pipeline {
             steps {
                 script {
                     // Build Docker image
+                    echo "docker BUIDL IMAGE..."
                     sh '''
                         docker build -t $DOCKER_IMAGE .
                     '''
