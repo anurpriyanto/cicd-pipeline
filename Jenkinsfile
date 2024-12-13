@@ -1,39 +1,51 @@
 pipeline {
     agent any
+
     environment {
-        // Define your Docker Hub credentials and image name here
-        DOCKER_IMAGE = 'anurpriyanto/bologin:latest' // Image name
-        KUBE_CONTEXT = 'your-kube-context'  // Kube context if you have multiple clusters
-        KUBERNETES_NAMESPACE = 'default'  // Replace with your namespace
+        // Docker image name and tag
+        IMAGE_NAME = "anurpriyanto/bo-login"
+        IMAGE_TAG = "latest" // You can change this to a specific version or use BUILD_NUMBER
     }
+
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                git branch: 'main', 
-                    url: 'https://github.com/anurpriyanto/bo-login.git'
+                echo 'Cloning repository...'
+                git branch: 'main', url: 'https://github.com/anurpriyanto/bo-login.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
+                echo 'Building Docker image...'
                 script {
-                    // Build Docker image
-                    echo "docker BUIDL IMAGE..."
-                    sh '''
-                        docker build -t $DOCKER_IMAGE .
-                    '''
+                    // Build the Docker image using the Dockerfile in the repo
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
-        stage('Docker PushCCCCCCCC') {
+
+        stage('Push Docker Image') {
+            when {
+                expression { env.DOCKERHUB_USERNAME && env.DOCKERHUB_PASSWORD }
+            }
             steps {
-                echo "docker.....PUSH....INIT"
-                withCredentials([usernamePassword(credentialsId: 'dockerhubcredentials', passwordVariable: 'Qwerty117532', usernameVariable: 'anurpriyanto')]) {
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-                sh 'docker push $DOCKER_IMAGE'
+                echo 'Pushing Docker image to Docker Hub...'
+                script {
+                    // Log in to Docker Hub
+                    sh """
+                    echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    """
                 }
             }
         }
-        
     }
-    
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            sh 'docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true'
+        }
+    }
 }
