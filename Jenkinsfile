@@ -45,7 +45,9 @@ pipeline {
         always {
             echo 'Cleaning up...'
             script {
-                bat 'docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || echo Cleanup skipped'
+                bat """
+                docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || echo Cleanup skipped
+                """
             }
         }
     }
