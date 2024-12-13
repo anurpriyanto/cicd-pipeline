@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // Docker image name and tag
         IMAGE_NAME = "anurpriyanto/bo-login"
-        IMAGE_TAG = "latest" // You can change this to a specific version or use BUILD_NUMBER
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -19,8 +18,7 @@ pipeline {
             steps {
                 echo 'Building Docker image...'
                 script {
-                    // Build the Docker image using the Dockerfile in the repo
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                 }
             }
         }
@@ -32,11 +30,12 @@ pipeline {
             steps {
                 echo 'Pushing Docker image to Docker Hub...'
                 script {
-                    // Log in to Docker Hub
-                    sh """
-                    echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        bat """
+                        echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        """
+                    }
                 }
             }
         }
@@ -45,7 +44,9 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true'
+            script {
+                bat 'docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || echo Cleanup skipped'
+            }
         }
     }
 }
