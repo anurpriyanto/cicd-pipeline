@@ -1,54 +1,72 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE_NAME = "anurpriyanto/bo-login"
-        IMAGE_TAG = "latest"
+        // Define your Docker Hub credentials and image name here
+        DOCKER_IMAGE = 'bologin:v1' // Image name
+        KUBE_CONTEXT = 'bo-project'  // Kube context if you have multiple clusters
+        KUBERNETES_NAMESPACE = 'bo-project'  // Replace with your namespace
     }
-
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                echo 'Cloning repository...'
-                git branch: 'main', url: 'https://github.com/anurpriyanto/bo-login.git'
+                // Checkout your repository
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'git', url: 'git@github.com:ilyasjaelani/python-apps-iaj.git']])
             }
         }
-
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
                 script {
-                    bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    // Build Docker image
+                    sh '''
+                        docker build -t $DOCKER_IMAGE .
+                    '''
                 }
             }
         }
-
-        stage('Push Docker Image') {
-            when {
-                expression { env.DOCKERHUB_USERNAME && env.DOCKERHUB_PASSWORD }
-            }
+        stage('Docker Push') {
             steps {
-                echo 'Pushing Docker image to Docker Hub...'
+                withCredentials([usernamePassword(credentialsId: 'ilyasjae-dockerhub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+                sh 'docker push $DOCKER_IMAGE'
+                }
+            }
+        }
+        // stage('delete manifest in Kubernetes') {
+        //     steps {
+        //         script {
+        //             // Deploy to Kubernetes using kubectl
+        //             sh '''
+        //                 kubectl delete -f deployment.yaml -n $KUBERNETES_NAMESPACE
+        //                 sleep 60
+        //             '''
+        //         }
+        //     }
+        // }
+        stage('Deploy again to Kubernetes') {
+            steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
-                        bat """
-                        echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME} --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        """
-                    }
+                    // Deploy to Kubernetes using kubectl
+                    sh '''
+                        kubectl apply -f deployment.yaml -n $KUBERNETES_NAMESPACE
+                    '''
+                }
+            }
+        }
+        stage('rollout restart  Kubernetes') {
+            steps {
+                script {
+                    // Deploy to Kubernetes using kubectl
+                    sh '''
+                        kubectl rollout restart deployment/python-app-iaj -n $KUBERNETES_NAMESPACE
+                    '''
                 }
             }
         }
     }
-
     post {
         always {
-            echo 'Cleaning up...'
-            script {
-                bat """
-                docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || echo Cleanup skipped
-                """
-            }
+            // Clean up if necessary, for example, remove the Docker image locally
+            sh 'docker rmi $DOCKER_IMAGE'
         }
     }
 }
