@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Checkout your repository
-                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'git', url: 'git@github.com:ilyasjaelani/python-apps-iaj.git']])
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'git', url: 'git@github.com:anurpriyanto/bo-login.git']])
             }
         }
         stage('Build Docker Image') {
