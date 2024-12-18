@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         // Define your Docker Hub credentials and image name here
-        DOCKER_IMAGE = 'bologin:v1' // Image name
+        DOCKER_IMAGE = 'anurpriyanto/bologin:v1' // Image name
         KUBE_CONTEXT = 'bo-project'  // Kube context if you have multiple clusters
         KUBERNETES_NAMESPACE = 'bo-project'  // Replace with your namespace
     }
